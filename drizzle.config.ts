@@ -1,11 +1,13 @@
 import "dotenv/config";
-import type { Config } from "drizzle-kit";
+import { defineConfig } from "drizzle-kit";
 
-export default {
+export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./drizzle",
-  driver: "pg",
+
+  dialect: "postgresql",
+
   dbCredentials: {
-    url: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/apollo_db",
+    url: process.env.DATABASE_URL ?? "postgresql://postgres:postgres@localhost:5438/apollo_db",
   },
-} satisfies Config;
+});
