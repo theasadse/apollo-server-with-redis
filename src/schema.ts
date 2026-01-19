@@ -43,16 +43,16 @@ export const typeDefs = gql`
     # User queries
     user(id: Int!): User
     users: [User!]!
-    
+
     # Post queries
     post(id: Int!): Post
     posts: [Post!]!
     postsByAuthor(authorId: Int!): [Post!]!
-    
+
     # Comment queries
     commentsByPost(postId: Int!): [Comment!]!
     comments: [Comment!]!
-    
+
     # Health check
     health: String!
   }
@@ -63,14 +63,14 @@ export const typeDefs = gql`
     createUser(name: String!, email: String!, password: String!): User!
     updateUser(id: Int!, name: String, email: String): User
     deleteUser(id: Int!): Boolean!
-    
+
     # Post mutations
     createPost(title: String!, content: String!, authorId: Int!): Post!
     updatePost(id: Int!, title: String, content: String): Post
     deletePost(id: Int!): Boolean!
     incrementPostViews(id: Int!): Post
     likePost(id: Int!): Post
-    
+
     # Comment mutations
     createComment(content: String!, authorId: Int!, postId: Int!): Comment!
     updateComment(id: Int!, content: String!): Comment

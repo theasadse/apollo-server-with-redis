@@ -31,11 +31,7 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
   return data ? JSON.parse(data) : null;
 }
 
-export async function cacheSet<T>(
-  key: string,
-  value: T,
-  expiresIn: number = 3600
-): Promise<void> {
+export async function cacheSet<T>(key: string, value: T, expiresIn: number = 3600): Promise<void> {
   const client = await getRedisClient();
   await client.setEx(key, expiresIn, JSON.stringify(value));
 }

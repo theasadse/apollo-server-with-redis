@@ -15,7 +15,12 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"
   },
-  "keywords": ["apollo-server", "drizzle", "redis", "graphql"],
+  "keywords": [
+    "apollo-server",
+    "drizzle",
+    "redis",
+    "graphql"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

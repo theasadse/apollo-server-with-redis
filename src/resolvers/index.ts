@@ -143,10 +143,7 @@ export const resolvers = {
       _: any,
       { name, email, password }: { name: string; email: string; password: string }
     ) {
-      const newUser = await db
-        .insert(users)
-        .values({ name, email, password })
-        .returning();
+      const newUser = await db.insert(users).values({ name, email, password }).returning();
 
       // Invalidate cache
       await cacheDel("all:users");
@@ -154,19 +151,12 @@ export const resolvers = {
       return newUser[0];
     },
 
-    async updateUser(
-      _: any,
-      { id, name, email }: { id: number; name?: string; email?: string }
-    ) {
+    async updateUser(_: any, { id, name, email }: { id: number; name?: string; email?: string }) {
       const updateData: any = {};
       if (name) updateData.name = name;
       if (email) updateData.email = email;
 
-      const updated = await db
-        .update(users)
-        .set(updateData)
-        .where(eq(users.id, id))
-        .returning();
+      const updated = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
 
       // Invalidate cache
       await cacheDel(`user:${id}`);
@@ -190,10 +180,7 @@ export const resolvers = {
       _: any,
       { title, content, authorId }: { title: string; content: string; authorId: number }
     ) {
-      const newPost = await db
-        .insert(posts)
-        .values({ title, content, authorId })
-        .returning();
+      const newPost = await db.insert(posts).values({ title, content, authorId }).returning();
 
       // Invalidate cache
       await cacheDel("all:posts");
@@ -210,11 +197,7 @@ export const resolvers = {
       if (title) updateData.title = title;
       if (content) updateData.content = content;
 
-      const updated = await db
-        .update(posts)
-        .set(updateData)
-        .where(eq(posts.id, id))
-        .returning();
+      const updated = await db.update(posts).set(updateData).where(eq(posts.id, id)).returning();
 
       // Invalidate cache
       await cacheDel(`post:${id}`);
@@ -288,10 +271,7 @@ export const resolvers = {
       return newComment[0];
     },
 
-    async updateComment(
-      _: any,
-      { id, content }: { id: number; content: string }
-    ) {
+    async updateComment(_: any, { id, content }: { id: number; content: string }) {
       const updated = await db
         .update(comments)
         .set({ content })
