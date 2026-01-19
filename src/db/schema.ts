@@ -1,5 +1,6 @@
 import { integer, text, pgTable, serial, real, timestamp } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {
@@ -22,7 +23,7 @@ export const posts = pgTable("posts", {
   content: text("content").notNull(),
   authorId: integer("author_id")
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: "cascade" }),
   views: integer("views").default(0),
   likes: integer("likes").default(0),
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -39,10 +40,10 @@ export const comments = pgTable("comments", {
   content: text("content").notNull(),
   authorId: integer("author_id")
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: "cascade" }),
   postId: integer("post_id")
     .notNull()
-    .references(() => posts.id),
+    .references(() => posts.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
@@ -61,6 +62,31 @@ export const cacheSessions = pgTable("cache_sessions", {
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  posts: many(posts),
+  comments: many(comments),
+}));
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+  author: one(users, {
+    fields: [posts.authorId],
+    references: [users.id],
+  }),
+  comments: many(comments),
+}));
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+  author: one(users, {
+    fields: [comments.authorId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [comments.postId],
+    references: [posts.id],
+  }),
+}));
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

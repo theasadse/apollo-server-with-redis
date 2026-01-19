@@ -11,19 +11,14 @@ export const resolvers = {
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
 
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, id),
-        with: {
-          posts: true,
-          comments: true,
-        },
-      });
+      const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
 
-      if (user) {
-        await cacheSet(cacheKey, user, 3600);
+      if (user.length > 0) {
+        await cacheSet(cacheKey, user[0], 3600);
+        return user[0];
       }
 
-      return user;
+      return null;
     },
 
     async users() {
@@ -31,12 +26,7 @@ export const resolvers = {
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
 
-      const allUsers = await db.query.users.findMany({
-        with: {
-          posts: true,
-          comments: true,
-        },
-      });
+      const allUsers = await db.select().from(users);
 
       await cacheSet(cacheKey, allUsers, 3600);
       return allUsers;
@@ -48,23 +38,14 @@ export const resolvers = {
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
 
-      const post = await db.query.posts.findFirst({
-        where: eq(posts.id, id),
-        with: {
-          author: true,
-          comments: {
-            with: {
-              author: true,
-            },
-          },
-        },
-      });
+      const post = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
 
-      if (post) {
-        await cacheSet(cacheKey, post, 3600);
+      if (post.length > 0) {
+        await cacheSet(cacheKey, post[0], 3600);
+        return post[0];
       }
 
-      return post;
+      return null;
     },
 
     async posts() {
@@ -72,12 +53,7 @@ export const resolvers = {
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
 
-      const allPosts = await db.query.posts.findMany({
-        with: {
-          author: true,
-          comments: true,
-        },
-      });
+      const allPosts = await db.select().from(posts);
 
       await cacheSet(cacheKey, allPosts, 3600);
       return allPosts;
@@ -88,13 +64,7 @@ export const resolvers = {
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
 
-      const authorPosts = await db.query.posts.findMany({
-        where: eq(posts.authorId, authorId),
-        with: {
-          author: true,
-          comments: true,
-        },
-      });
+      const authorPosts = await db.select().from(posts).where(eq(posts.authorId, authorId));
 
       await cacheSet(cacheKey, authorPosts, 3600);
       return authorPosts;
@@ -106,13 +76,7 @@ export const resolvers = {
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
 
-      const postComments = await db.query.comments.findMany({
-        where: eq(comments.postId, postId),
-        with: {
-          author: true,
-          post: true,
-        },
-      });
+      const postComments = await db.select().from(comments).where(eq(comments.postId, postId));
 
       await cacheSet(cacheKey, postComments, 3600);
       return postComments;
@@ -123,12 +87,7 @@ export const resolvers = {
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
 
-      const allComments = await db.query.comments.findMany({
-        with: {
-          author: true,
-          post: true,
-        },
-      });
+      const allComments = await db.select().from(comments);
 
       await cacheSet(cacheKey, allComments, 3600);
       return allComments;
