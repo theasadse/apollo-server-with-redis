@@ -21,10 +21,7 @@ export const resolvers = {
       return null;
     },
 
-    async users(
-      _: any,
-      { limit = 10, offset = 0 }: { limit?: number; offset?: number }
-    ) {
+    async users(_: any, { limit = 10, offset = 0 }: { limit?: number; offset?: number }) {
       const cacheKey = `users:paginated:${limit}:${offset}`;
       const cachedCount = `users:count`;
 
@@ -35,9 +32,9 @@ export const resolvers = {
       }
 
       console.log(`🟡 USERS PAGE (${offset}-${offset + limit}) FROM DATABASE`);
-      
+
       // Get total count
-      let totalCount = await cacheGet(cachedCount) as number;
+      let totalCount = (await cacheGet(cachedCount)) as number;
       if (!totalCount) {
         const result = await db.select().from(users);
         totalCount = result.length;
@@ -64,7 +61,7 @@ export const resolvers = {
     async userCount() {
       const cachedCount = "users:count";
       const cached = await cacheGet(cachedCount);
-      
+
       if (cached) {
         console.log("✅ USER COUNT FROM CACHE");
         return cached;
@@ -73,7 +70,7 @@ export const resolvers = {
       console.log("🟡 USER COUNT FROM DATABASE");
       const result = await db.select().from(users);
       const count = result.length;
-      
+
       await cacheSet(cachedCount, count, 3600);
       return count;
     },
@@ -94,10 +91,7 @@ export const resolvers = {
       return null;
     },
 
-    async posts(
-      _: any,
-      { limit = 10, offset = 0 }: { limit?: number; offset?: number }
-    ) {
+    async posts(_: any, { limit = 10, offset = 0 }: { limit?: number; offset?: number }) {
       const cacheKey = `posts:paginated:${limit}:${offset}`;
       const cachedCount = `posts:count`;
 
@@ -108,8 +102,8 @@ export const resolvers = {
       }
 
       console.log(`🟡 POSTS PAGE (${offset}-${offset + limit}) FROM DATABASE`);
-      
-      let totalCount = await cacheGet(cachedCount) as number;
+
+      let totalCount = (await cacheGet(cachedCount)) as number;
       if (!totalCount) {
         const result = await db.select().from(posts);
         totalCount = result.length;
@@ -135,7 +129,7 @@ export const resolvers = {
     async postCount() {
       const cachedCount = "posts:count";
       const cached = await cacheGet(cachedCount);
-      
+
       if (cached) {
         console.log("✅ POST COUNT FROM CACHE");
         return cached;
@@ -144,7 +138,7 @@ export const resolvers = {
       console.log("🟡 POST COUNT FROM DATABASE");
       const result = await db.select().from(posts);
       const count = result.length;
-      
+
       await cacheSet(cachedCount, count, 3600);
       return count;
     },
@@ -163,8 +157,8 @@ export const resolvers = {
       }
 
       console.log(`🟡 POSTS BY AUTHOR (${offset}-${offset + limit}) FROM DATABASE`);
-      
-      let totalCount = await cacheGet(countKey) as number;
+
+      let totalCount = (await cacheGet(countKey)) as number;
       if (!totalCount) {
         const result = await db.select().from(posts).where(eq(posts.authorId, authorId));
         totalCount = result.length;
@@ -207,8 +201,8 @@ export const resolvers = {
       }
 
       console.log(`🟡 COMMENTS FOR POST (${offset}-${offset + limit}) FROM DATABASE`);
-      
-      let totalCount = await cacheGet(countKey) as number;
+
+      let totalCount = (await cacheGet(countKey)) as number;
       if (!totalCount) {
         const result = await db.select().from(comments).where(eq(comments.postId, postId));
         totalCount = result.length;
@@ -236,10 +230,7 @@ export const resolvers = {
       return response;
     },
 
-    async comments(
-      _: any,
-      { limit = 10, offset = 0 }: { limit?: number; offset?: number }
-    ) {
+    async comments(_: any, { limit = 10, offset = 0 }: { limit?: number; offset?: number }) {
       const cacheKey = `comments:paginated:${limit}:${offset}`;
       const cachedCount = `comments:count`;
 
@@ -250,8 +241,8 @@ export const resolvers = {
       }
 
       console.log(`🟡 COMMENTS PAGE (${offset}-${offset + limit}) FROM DATABASE`);
-      
-      let totalCount = await cacheGet(cachedCount) as number;
+
+      let totalCount = (await cacheGet(cachedCount)) as number;
       if (!totalCount) {
         const result = await db.select().from(comments);
         totalCount = result.length;
@@ -277,7 +268,7 @@ export const resolvers = {
     async commentCount() {
       const cachedCount = "comments:count";
       const cached = await cacheGet(cachedCount);
-      
+
       if (cached) {
         console.log("✅ COMMENT COUNT FROM CACHE");
         return cached;
@@ -286,7 +277,7 @@ export const resolvers = {
       console.log("🟡 COMMENT COUNT FROM DATABASE");
       const result = await db.select().from(comments);
       const count = result.length;
-      
+
       await cacheSet(cachedCount, count, 3600);
       return count;
     },
