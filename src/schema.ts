@@ -1,9 +1,35 @@
 import { gql } from "graphql-tag";
 
 export const typeDefs = gql`
+  # Pagination metadata
+  type PaginationInfo {
+    total: Int!
+    limit: Int!
+    offset: Int!
+    hasMore: Boolean!
+  }
+
+  # Paginated users response
+  type PaginatedUsers {
+    data: [User!]!
+    pagination: PaginationInfo!
+  }
+
+  # Paginated posts response
+  type PaginatedPosts {
+    data: [Post!]!
+    pagination: PaginationInfo!
+  }
+
+  # Paginated comments response
+  type PaginatedComments {
+    data: [Comment!]!
+    pagination: PaginationInfo!
+  }
+
   # User type
   type User {
-    id: Int!
+    id: ID!
     name: String!
     email: String!
     createdAt: String!
@@ -18,7 +44,7 @@ export const typeDefs = gql`
     title: String!
     content: String!
     author: User!
-    authorId: Int!
+    authorId: ID!
     views: Int!
     likes: Int!
     comments: [Comment!]!
@@ -41,17 +67,20 @@ export const typeDefs = gql`
   # Query type
   type Query {
     # User queries
-    user(id: Int!): User
-    users: [User!]!
+    user(id: ID!): User
+    users(limit: Int = 10, offset: Int = 0): PaginatedUsers!
+    userCount: Int!
 
     # Post queries
     post(id: Int!): Post
-    posts: [Post!]!
-    postsByAuthor(authorId: Int!): [Post!]!
+    posts(limit: Int = 10, offset: Int = 0): PaginatedPosts!
+    postsByAuthor(authorId: ID!, limit: Int = 10, offset: Int = 0): PaginatedPosts!
+    postCount: Int!
 
     # Comment queries
-    commentsByPost(postId: Int!): [Comment!]!
-    comments: [Comment!]!
+    commentsByPost(postId: Int!, limit: Int = 10, offset: Int = 0): PaginatedComments!
+    comments(limit: Int = 10, offset: Int = 0): PaginatedComments!
+    commentCount: Int!
 
     # Health check
     health: String!
@@ -61,18 +90,18 @@ export const typeDefs = gql`
   type Mutation {
     # User mutations
     createUser(name: String!, email: String!, password: String!): User!
-    updateUser(id: Int!, name: String, email: String): User
-    deleteUser(id: Int!): Boolean!
+    updateUser(id: ID!, name: String, email: String): User
+    deleteUser(id: ID!): Boolean!
 
     # Post mutations
-    createPost(title: String!, content: String!, authorId: Int!): Post!
+    createPost(title: String!, content: String!, authorId: ID!): Post!
     updatePost(id: Int!, title: String, content: String): Post
     deletePost(id: Int!): Boolean!
     incrementPostViews(id: Int!): Post
     likePost(id: Int!): Post
 
     # Comment mutations
-    createComment(content: String!, authorId: Int!, postId: Int!): Comment!
+    createComment(content: String!, authorId: ID!, postId: Int!): Comment!
     updateComment(id: Int!, content: String!): Comment
     deleteComment(id: Int!): Boolean!
   }

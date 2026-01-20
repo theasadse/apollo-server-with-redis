@@ -1,5 +1,5 @@
-import { db } from "./db/index";
-import { users, posts, comments } from "./db/schema";
+import { db } from "./db/index.js";
+import { users, posts, comments } from "./db/schema.js";
 
 async function seedDatabase() {
   try {

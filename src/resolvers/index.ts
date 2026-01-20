@@ -1,12 +1,12 @@
-import { db } from "../db/index";
-import { users, posts, comments } from "../db/schema";
-import { cacheGet, cacheSet, cacheDel } from "../utils/redis";
+import { db } from "../db/index.js";
+import { users, posts, comments } from "../db/schema.js";
+import { cacheGet, cacheSet, cacheDel } from "../utils/redis.js";
 import { eq } from "drizzle-orm";
 
 export const resolvers = {
   Query: {
     // User queries
-    async user(_: any, { id }: { id: number }) {
+    async user(_: any, { id }: { id: string }) {
       const cacheKey = `user:${id}`;
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
@@ -21,15 +21,61 @@ export const resolvers = {
       return null;
     },
 
-    async users() {
-      const cacheKey = "all:users";
+    async users(
+      _: any,
+      { limit = 10, offset = 0 }: { limit?: number; offset?: number }
+    ) {
+      const cacheKey = `users:paginated:${limit}:${offset}`;
+      const cachedCount = `users:count`;
+
       const cached = await cacheGet(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        console.log(`✅ USERS PAGE (${offset}-${offset + limit}) FROM CACHE`);
+        return cached;
+      }
 
-      const allUsers = await db.select().from(users);
+      console.log(`🟡 USERS PAGE (${offset}-${offset + limit}) FROM DATABASE`);
+      
+      // Get total count
+      let totalCount = await cacheGet(cachedCount) as number;
+      if (!totalCount) {
+        const result = await db.select().from(users);
+        totalCount = result.length;
+        await cacheSet(cachedCount, totalCount, 3600);
+      }
 
-      await cacheSet(cacheKey, allUsers, 3600);
-      return allUsers;
+      // Get paginated data
+      const allUsers = await db.select().from(users).limit(limit).offset(offset);
+
+      const response = {
+        data: allUsers,
+        pagination: {
+          total: totalCount,
+          limit,
+          offset,
+          hasMore: offset + limit < totalCount,
+        },
+      };
+
+      await cacheSet(cacheKey, response, 3600);
+      return response;
+    },
+
+    async userCount() {
+      const cachedCount = "users:count";
+      const cached = await cacheGet(cachedCount);
+      
+      if (cached) {
+        console.log("✅ USER COUNT FROM CACHE");
+        return cached;
+      }
+
+      console.log("🟡 USER COUNT FROM DATABASE");
+      const result = await db.select().from(users);
+      const count = result.length;
+      
+      await cacheSet(cachedCount, count, 3600);
+      return count;
     },
 
     // Post queries
@@ -48,49 +94,201 @@ export const resolvers = {
       return null;
     },
 
-    async posts() {
-      const cacheKey = "all:posts";
+    async posts(
+      _: any,
+      { limit = 10, offset = 0 }: { limit?: number; offset?: number }
+    ) {
+      const cacheKey = `posts:paginated:${limit}:${offset}`;
+      const cachedCount = `posts:count`;
+
       const cached = await cacheGet(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        console.log(`✅ POSTS PAGE (${offset}-${offset + limit}) FROM CACHE`);
+        return cached;
+      }
 
-      const allPosts = await db.select().from(posts);
+      console.log(`🟡 POSTS PAGE (${offset}-${offset + limit}) FROM DATABASE`);
+      
+      let totalCount = await cacheGet(cachedCount) as number;
+      if (!totalCount) {
+        const result = await db.select().from(posts);
+        totalCount = result.length;
+        await cacheSet(cachedCount, totalCount, 3600);
+      }
 
-      await cacheSet(cacheKey, allPosts, 3600);
-      return allPosts;
+      const allPosts = await db.select().from(posts).limit(limit).offset(offset);
+
+      const response = {
+        data: allPosts,
+        pagination: {
+          total: totalCount,
+          limit,
+          offset,
+          hasMore: offset + limit < totalCount,
+        },
+      };
+
+      await cacheSet(cacheKey, response, 3600);
+      return response;
     },
 
-    async postsByAuthor(_: any, { authorId }: { authorId: number }) {
-      const cacheKey = `author:${authorId}:posts`;
+    async postCount() {
+      const cachedCount = "posts:count";
+      const cached = await cacheGet(cachedCount);
+      
+      if (cached) {
+        console.log("✅ POST COUNT FROM CACHE");
+        return cached;
+      }
+
+      console.log("🟡 POST COUNT FROM DATABASE");
+      const result = await db.select().from(posts);
+      const count = result.length;
+      
+      await cacheSet(cachedCount, count, 3600);
+      return count;
+    },
+
+    async postsByAuthor(
+      _: any,
+      { authorId, limit = 10, offset = 0 }: { authorId: string; limit?: number; offset?: number }
+    ) {
+      const cacheKey = `author:${authorId}:posts:${limit}:${offset}`;
+      const countKey = `author:${authorId}:posts:count`;
+
       const cached = await cacheGet(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        console.log(`✅ POSTS BY AUTHOR (${offset}-${offset + limit}) FROM CACHE`);
+        return cached;
+      }
 
-      const authorPosts = await db.select().from(posts).where(eq(posts.authorId, authorId));
+      console.log(`🟡 POSTS BY AUTHOR (${offset}-${offset + limit}) FROM DATABASE`);
+      
+      let totalCount = await cacheGet(countKey) as number;
+      if (!totalCount) {
+        const result = await db.select().from(posts).where(eq(posts.authorId, authorId));
+        totalCount = result.length;
+        await cacheSet(countKey, totalCount, 3600);
+      }
 
-      await cacheSet(cacheKey, authorPosts, 3600);
-      return authorPosts;
+      const authorPosts = await db
+        .select()
+        .from(posts)
+        .where(eq(posts.authorId, authorId))
+        .limit(limit)
+        .offset(offset);
+
+      const response = {
+        data: authorPosts,
+        pagination: {
+          total: totalCount,
+          limit,
+          offset,
+          hasMore: offset + limit < totalCount,
+        },
+      };
+
+      await cacheSet(cacheKey, response, 3600);
+      return response;
     },
 
     // Comment queries
-    async commentsByPost(_: any, { postId }: { postId: number }) {
-      const cacheKey = `post:${postId}:comments`;
+    async commentsByPost(
+      _: any,
+      { postId, limit = 10, offset = 0 }: { postId: number; limit?: number; offset?: number }
+    ) {
+      const cacheKey = `post:${postId}:comments:${limit}:${offset}`;
+      const countKey = `post:${postId}:comments:count`;
+
       const cached = await cacheGet(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        console.log(`✅ COMMENTS FOR POST (${offset}-${offset + limit}) FROM CACHE`);
+        return cached;
+      }
 
-      const postComments = await db.select().from(comments).where(eq(comments.postId, postId));
+      console.log(`🟡 COMMENTS FOR POST (${offset}-${offset + limit}) FROM DATABASE`);
+      
+      let totalCount = await cacheGet(countKey) as number;
+      if (!totalCount) {
+        const result = await db.select().from(comments).where(eq(comments.postId, postId));
+        totalCount = result.length;
+        await cacheSet(countKey, totalCount, 3600);
+      }
 
-      await cacheSet(cacheKey, postComments, 3600);
-      return postComments;
+      const postComments = await db
+        .select()
+        .from(comments)
+        .where(eq(comments.postId, postId))
+        .limit(limit)
+        .offset(offset);
+
+      const response = {
+        data: postComments,
+        pagination: {
+          total: totalCount,
+          limit,
+          offset,
+          hasMore: offset + limit < totalCount,
+        },
+      };
+
+      await cacheSet(cacheKey, response, 3600);
+      return response;
     },
 
-    async comments() {
-      const cacheKey = "all:comments";
+    async comments(
+      _: any,
+      { limit = 10, offset = 0 }: { limit?: number; offset?: number }
+    ) {
+      const cacheKey = `comments:paginated:${limit}:${offset}`;
+      const cachedCount = `comments:count`;
+
       const cached = await cacheGet(cacheKey);
-      if (cached) return cached;
+      if (cached) {
+        console.log(`✅ COMMENTS PAGE (${offset}-${offset + limit}) FROM CACHE`);
+        return cached;
+      }
 
-      const allComments = await db.select().from(comments);
+      console.log(`🟡 COMMENTS PAGE (${offset}-${offset + limit}) FROM DATABASE`);
+      
+      let totalCount = await cacheGet(cachedCount) as number;
+      if (!totalCount) {
+        const result = await db.select().from(comments);
+        totalCount = result.length;
+        await cacheSet(cachedCount, totalCount, 3600);
+      }
 
-      await cacheSet(cacheKey, allComments, 3600);
-      return allComments;
+      const allComments = await db.select().from(comments).limit(limit).offset(offset);
+
+      const response = {
+        data: allComments,
+        pagination: {
+          total: totalCount,
+          limit,
+          offset,
+          hasMore: offset + limit < totalCount,
+        },
+      };
+
+      await cacheSet(cacheKey, response, 3600);
+      return response;
+    },
+
+    async commentCount() {
+      const cachedCount = "comments:count";
+      const cached = await cacheGet(cachedCount);
+      
+      if (cached) {
+        console.log("✅ COMMENT COUNT FROM CACHE");
+        return cached;
+      }
+
+      console.log("🟡 COMMENT COUNT FROM DATABASE");
+      const result = await db.select().from(comments);
+      const count = result.length;
+      
+      await cacheSet(cachedCount, count, 3600);
+      return count;
     },
 
     health: () => "Server is running!",
@@ -102,34 +300,61 @@ export const resolvers = {
       _: any,
       { name, email, password }: { name: string; email: string; password: string }
     ) {
-      const newUser = await db.insert(users).values({ name, email, password }).returning();
+      try {
+        const newUser = await db.insert(users).values({ name, email, password }).returning();
 
-      // Invalidate cache
-      await cacheDel("all:users");
+        // Invalidate all user-related caches
+        await cacheDel("users:count");
+        // Clear all user pagination caches (simplified - in production use Redis pattern matching)
+        for (let i = 0; i < 10; i++) {
+          for (let j = 0; j < 100; j += 10) {
+            await cacheDel(`users:paginated:${i}:${j}`);
+          }
+        }
 
-      return newUser[0];
+        return newUser[0];
+      } catch (error: any) {
+        console.error("Error creating user:", error);
+
+        // Check for unique constraint violation
+        if (error.code === "23505" || error.message?.includes("unique")) {
+          throw new Error(`A user with email "${email}" already exists`);
+        }
+
+        throw new Error(`Failed to create user: ${error.message}`);
+      }
     },
 
-    async updateUser(_: any, { id, name, email }: { id: number; name?: string; email?: string }) {
+    async updateUser(_: any, { id, name, email }: { id: string; name?: string; email?: string }) {
       const updateData: any = {};
       if (name) updateData.name = name;
       if (email) updateData.email = email;
 
       const updated = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
 
-      // Invalidate cache
+      // Invalidate caches
       await cacheDel(`user:${id}`);
-      await cacheDel("all:users");
+      await cacheDel("users:count");
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 100; j += 10) {
+          await cacheDel(`users:paginated:${i}:${j}`);
+        }
+      }
 
       return updated[0];
     },
 
-    async deleteUser(_: any, { id }: { id: number }) {
+    async deleteUser(_: any, { id }: { id: string }) {
       await db.delete(users).where(eq(users.id, id));
 
-      // Invalidate cache
+      // Invalidate caches
       await cacheDel(`user:${id}`);
-      await cacheDel("all:users");
+      await cacheDel("users:count");
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 100; j += 10) {
+          await cacheDel(`users:paginated:${i}:${j}`);
+        }
+      }
 
       return true;
     },
@@ -137,13 +362,19 @@ export const resolvers = {
     // Post mutations
     async createPost(
       _: any,
-      { title, content, authorId }: { title: string; content: string; authorId: number }
+      { title, content, authorId }: { title: string; content: string; authorId: string }
     ) {
       const newPost = await db.insert(posts).values({ title, content, authorId }).returning();
 
-      // Invalidate cache
-      await cacheDel("all:posts");
-      await cacheDel(`author:${authorId}:posts`);
+      // Invalidate caches
+      await cacheDel("posts:count");
+      await cacheDel(`author:${authorId}:posts:count`);
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 100; j += 10) {
+          await cacheDel(`posts:paginated:${i}:${j}`);
+          await cacheDel(`author:${authorId}:posts:${i}:${j}`);
+        }
+      }
 
       return newPost[0];
     },
@@ -158,9 +389,14 @@ export const resolvers = {
 
       const updated = await db.update(posts).set(updateData).where(eq(posts.id, id)).returning();
 
-      // Invalidate cache
+      // Invalidate caches
       await cacheDel(`post:${id}`);
-      await cacheDel("all:posts");
+      await cacheDel("posts:count");
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 100; j += 10) {
+          await cacheDel(`posts:paginated:${i}:${j}`);
+        }
+      }
 
       return updated[0];
     },
@@ -168,9 +404,14 @@ export const resolvers = {
     async deletePost(_: any, { id }: { id: number }) {
       await db.delete(posts).where(eq(posts.id, id));
 
-      // Invalidate cache
+      // Invalidate caches
       await cacheDel(`post:${id}`);
-      await cacheDel("all:posts");
+      await cacheDel("posts:count");
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 100; j += 10) {
+          await cacheDel(`posts:paginated:${i}:${j}`);
+        }
+      }
 
       return true;
     },
@@ -216,16 +457,22 @@ export const resolvers = {
     // Comment mutations
     async createComment(
       _: any,
-      { content, authorId, postId }: { content: string; authorId: number; postId: number }
+      { content, authorId, postId }: { content: string; authorId: string; postId: number }
     ) {
       const newComment = await db
         .insert(comments)
         .values({ content, authorId, postId })
         .returning();
 
-      // Invalidate cache
-      await cacheDel(`post:${postId}:comments`);
-      await cacheDel("all:comments");
+      // Invalidate caches
+      await cacheDel(`post:${postId}:comments:count`);
+      await cacheDel("comments:count");
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 100; j += 10) {
+          await cacheDel(`post:${postId}:comments:${i}:${j}`);
+          await cacheDel(`comments:paginated:${i}:${j}`);
+        }
+      }
 
       return newComment[0];
     },
@@ -237,8 +484,13 @@ export const resolvers = {
         .where(eq(comments.id, id))
         .returning();
 
-      // Invalidate cache
-      await cacheDel("all:comments");
+      // Invalidate caches
+      await cacheDel("comments:count");
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 100; j += 10) {
+          await cacheDel(`comments:paginated:${i}:${j}`);
+        }
+      }
 
       return updated[0];
     },
@@ -246,8 +498,13 @@ export const resolvers = {
     async deleteComment(_: any, { id }: { id: number }) {
       await db.delete(comments).where(eq(comments.id, id));
 
-      // Invalidate cache
-      await cacheDel("all:comments");
+      // Invalidate caches
+      await cacheDel("comments:count");
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 100; j += 10) {
+          await cacheDel(`comments:paginated:${i}:${j}`);
+        }
+      }
 
       return true;
     },

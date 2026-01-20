@@ -3,9 +3,9 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
-import { typeDefs } from "./schema";
-import { resolvers } from "./resolvers";
-import { getRedisClient, disconnectRedis } from "./utils/redis";
+import { typeDefs } from "./schema.js";
+import { resolvers } from "./resolvers/index.js";
+import { getRedisClient, disconnectRedis } from "./utils/redis.js";
 
 const PORT = process.env.PORT || 4000;
 const INSTANCE_ID = process.env.INSTANCE_ID || "default";

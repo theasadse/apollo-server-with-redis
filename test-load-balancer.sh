@@ -37,8 +37,8 @@ echo -e "${BLUE}Executing ${NUM_REQUESTS} GraphQL queries${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-# Track instance distribution
-declare -A instance_count
+# Track instance distribution using temp file
+rm -f /tmp/instances_*.txt
 
 # Simple GraphQL query
 QUERY='{"query": "{ __typename }"}'
@@ -58,7 +58,7 @@ for i in $(seq 1 $NUM_REQUESTS); do
     
     # Count instances
     if [ -n "$instance" ]; then
-        ((instance_count[$instance]++))
+        echo "$instance" >> /tmp/instances_list.txt
         echo -e "${GREEN}$instance${NC} (Request ID: $request_id)"
     else
         echo -e "${RED}Failed to get instance info${NC}"
@@ -75,12 +75,15 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 total=0
-for instance in "${!instance_count[@]}"; do
-    count=${instance_count[$instance]}
-    percentage=$((count * 100 / NUM_REQUESTS))
-    echo -e "  ${GREEN}$instance${NC}: $count requests (${percentage}%)"
-    ((total += count))
-done
+if [ -f /tmp/instances_list.txt ]; then
+    # Get unique instances and their counts
+    for instance in $(cat /tmp/instances_list.txt | sort | uniq); do
+        count=$(grep -c "^${instance}$" /tmp/instances_list.txt)
+        percentage=$((count * 100 / NUM_REQUESTS))
+        echo -e "  ${GREEN}$instance${NC}: $count requests (${percentage}%)"
+        total=$((total + count))
+    done
+fi
 
 echo ""
 echo -e "  ${GREEN}Total${NC}: $total/$NUM_REQUESTS requests"
@@ -110,4 +113,4 @@ echo -e "  Load Balancer:   ${YELLOW}docker-compose logs -f nginx-lb${NC}"
 echo ""
 
 # Clean up temp files
-rm -f /tmp/headers_*.txt
+rm -f /tmp/headers_*.txt /tmp/instances_list.txt
