@@ -1,8 +1,11 @@
 import { db } from "../db/index.js";
 import { users, posts, comments } from "../db/schema.js";
 import { cacheGet, cacheSet, cacheDel } from "../utils/redis.js";
-import { eq } from "drizzle-orm";
-
+import { eq, sql } from "drizzle-orm";
+type PaginatedUsersCache = {
+  users: any[]; // or User[]
+  total: number;
+};
 export const resolvers = {
   Query: {
     // User queries
@@ -23,35 +26,37 @@ export const resolvers = {
 
     async users(_: any, { limit = 10, offset = 0 }: { limit?: number; offset?: number }) {
       const cacheKey = `users:paginated:${limit}:${offset}`;
-      const cachedCount = `users:count`;
+      const cachedCountKey = `users:count`;
 
-      const cached = await cacheGet(cacheKey);
-      if (cached) {
+      const cached = (await cacheGet(cacheKey)) as PaginatedUsersCache | null;
+
+      if (cached && Array.isArray(cached.users)) {
         console.log(`✅ USERS PAGE (${offset}-${offset + limit}) FROM CACHE`);
-        return cached;
+
+        return {
+          users: cached.users ?? [],
+          total: Number(cached.total) || 0,
+        };
       }
 
       console.log(`🟡 USERS PAGE (${offset}-${offset + limit}) FROM DATABASE`);
 
-      // Get total count
-      let totalCount = (await cacheGet(cachedCount)) as number;
+      // 2️⃣ Total count (whole DB)
+      let totalCount = Number(await cacheGet(cachedCountKey));
+
       if (!totalCount) {
-        const result = await db.select().from(users);
-        totalCount = result.length;
-        await cacheSet(cachedCount, totalCount, 3600);
+        const countResult = await db.select({ count: sql<number>`count(*)` }).from(users);
+
+        totalCount = Number(countResult[0]?.count || 0);
+        await cacheSet(cachedCountKey, totalCount, 3600);
       }
 
-      // Get paginated data
+      // 3️⃣ Paginated users (always an array)
       const allUsers = await db.select().from(users).limit(limit).offset(offset);
 
       const response = {
-        data: allUsers,
-        pagination: {
-          total: totalCount,
-          limit,
-          offset,
-          hasMore: offset + limit < totalCount,
-        },
+        users: allUsers ?? [], // 👈 NEVER null
+        total: totalCount ?? 0, // 👈 NEVER null
       };
 
       await cacheSet(cacheKey, response, 3600);
