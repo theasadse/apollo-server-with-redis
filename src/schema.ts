@@ -11,8 +11,8 @@ export const typeDefs = gql`
 
   # Paginated users response
   type PaginatedUsers {
-    data: [User!]!
-    pagination: PaginationInfo!
+    users: [User!]!
+    total: Int!
   }
 
   # Paginated posts response

@@ -12,6 +12,8 @@
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:seed": "tsx src/seed.ts",
+    "db:seed:1000": "tsx src/seed-1000-users.ts",
+    "db:seed:1000:graphql": "tsx src/seed-1000-users-graphql.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"
   },
