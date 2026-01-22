@@ -361,6 +361,13 @@ export const resolvers = {
       { title, content, authorId }: { title: string; content: string; authorId: string }
     ) {
       const newPost = await db.insert(posts).values({ title, content, authorId }).returning();
+<<<<<<< HEAD
+=======
+      // connsole.log("check this new post:", newPost);
+      console.log("New Post Created:", newPost);
+      console.log(`Title: ${title}, Author ID: ${authorId}`);
+
+>>>>>>> 3e9fd8feb6e9e8c3e69f38fab74e42f4ea45450d
       // Invalidate caches
       await cacheDel("posts:count");
       await cacheDel(`author:${authorId}:posts:count`);
