@@ -22,6 +22,7 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
-EXPOSE 4001 4002 4003
+# Expose default port (K8s will override via PORT env var)
+EXPOSE 4000
 
 CMD ["npm", "start"]

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apollo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: apollo
+  template:
+    metadata:
+      labels:
+        app: apollo
+    spec:
+      containers:
+        - name: apollo
+          image: apollo-server-with-redis-apollo-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+          env:
+            - name: PORT
+              value: "4000"
+            - name: INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: REDIS_URL
+              value: "redis://host.docker.internal:6379"
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@host.docker.internal:5438/apollo_db"
+            - name: NODE_ENV
+              value: "development"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+              memory: 512Mi
