@@ -9,6 +9,7 @@ Complete step-by-step guide to get this project running from scratch on a new ma
 Install these before starting:
 
 ### 1. Docker Desktop
+
 - **Download**: https://www.docker.com/products/docker-desktop
 - **Enable Kubernetes**: Docker Desktop → Settings → Kubernetes → Enable Kubernetes
 - **Verify**:
@@ -18,6 +19,7 @@ Install these before starting:
   ```
 
 ### 2. Node.js (v20 or higher)
+
 - **Download**: https://nodejs.org/
 - **Verify**:
   ```bash
@@ -26,6 +28,7 @@ Install these before starting:
   ```
 
 ### 3. Git
+
 - **Download**: https://git-scm.com/
 - **Verify**:
   ```bash
@@ -73,6 +76,7 @@ ls -la
 ```
 
 **Expected files:**
+
 - `package.json`
 - `docker-compose.yml`
 - `Dockerfile`
@@ -88,11 +92,13 @@ npm install
 ```
 
 **What this does:**
+
 - ✅ Installs all Node.js packages
 - ✅ Installs TypeScript, Drizzle ORM, Apollo Server, etc.
 - ✅ Creates `node_modules/` directory
 
 **Verify:**
+
 ```bash
 ls node_modules/
 ```
@@ -110,6 +116,7 @@ docker ps
 ```
 
 **Expected output:**
+
 ```
 CONTAINER ID   IMAGE                 STATUS          PORTS
 xxxxxxxxxxxx   postgres:16-alpine    Up 2 seconds    0.0.0.0:5438->5432/tcp
@@ -117,6 +124,7 @@ xxxxxxxxxxxx   redis:7-alpine        Up 2 seconds    0.0.0.0:6379->6379/tcp
 ```
 
 **Verify services:**
+
 ```bash
 # Test PostgreSQL connection
 docker exec -it <postgres-container-id> psql -U postgres -d apollo_db -c "SELECT version();"
@@ -139,11 +147,13 @@ npm run db:seed:1000:graphql
 ```
 
 **What this does:**
+
 - ✅ Creates `users`, `posts`, `comments`, `cache_sessions` tables
 - ✅ Inserts 1000+ test users
 - ✅ Database is ready for GraphQL queries
 
 **Verify:**
+
 ```bash
 # Check if tables exist
 docker exec -it <postgres-container-id> psql -U postgres -d apollo_db -c "\dt"
@@ -165,6 +175,7 @@ docker images | grep apollo-server
 ```
 
 **Expected output:**
+
 ```
 REPOSITORY                                    TAG       SIZE
 apollo-server-with-redis-apollo-server        latest    ~200MB
@@ -188,6 +199,7 @@ kubectl apply -f k8s/
 ```
 
 **Wait for pods to be ready:**
+
 ```bash
 # Watch pods starting up
 kubectl get pods --watch
@@ -196,6 +208,7 @@ kubectl get pods --watch
 ```
 
 **Expected output (after ~30-60 seconds):**
+
 ```
 NAME                                  READY   STATUS    RESTARTS   AGE
 apollo-xxxxxxxxxx-xxxxx               1/1     Running   0          45s
@@ -220,6 +233,7 @@ kubectl get hpa
 ```
 
 **Expected services:**
+
 ```
 NAME                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
 apollo-service      ClusterIP   10.96.xxx.xxx   <none>        4000/TCP       1m
@@ -247,8 +261,9 @@ curl -X POST http://localhost:30080/graphql \
 ```
 
 **Expected:**
+
 ```json
-{"data":{"userCount":1007}}
+{ "data": { "userCount": 1007 } }
 ```
 
 #### C. Fetch Users
@@ -260,6 +275,7 @@ curl -X POST http://localhost:30080/graphql \
 ```
 
 **Expected:**
+
 ```json
 {
   "data": {
@@ -280,6 +296,7 @@ Navigate to: **http://localhost:30080/graphql**
 You should see the GraphQL Playground interface.
 
 Try this query:
+
 ```graphql
 {
   users(limit: 10) {
@@ -301,30 +318,35 @@ Try this query:
 Run through this checklist to ensure everything is working:
 
 - [ ] **Docker containers running**
+
   ```bash
   docker ps | grep -E "postgres|redis"
   # Should show 2 containers
   ```
 
 - [ ] **Kubernetes pods running**
+
   ```bash
   kubectl get pods
   # All pods should show "Running" status
   ```
 
 - [ ] **Services accessible**
+
   ```bash
   kubectl get svc
   # nginx-service should show NodePort 30080
   ```
 
 - [ ] **Health endpoint works**
+
   ```bash
   curl http://localhost:30080/health
   # Should return: healthy
   ```
 
 - [ ] **GraphQL endpoint works**
+
   ```bash
   curl -X POST http://localhost:30080/graphql \
     -H "Content-Type: application/json" \
@@ -338,12 +360,14 @@ Run through this checklist to ensure everything is working:
   - Run a test query
 
 - [ ] **Database has data**
+
   ```bash
   docker exec -it <postgres-container-id> psql -U postgres -d apollo_db -c "SELECT COUNT(*) FROM users;"
   # Should show 1000+ users
   ```
 
 - [ ] **HPA is configured**
+
   ```bash
   kubectl get hpa
   # Should show apollo-hpa
@@ -362,12 +386,14 @@ Run through this checklist to ensure everything is working:
 ### Issue 1: Docker containers won't start
 
 **Symptom:**
+
 ```bash
 docker-compose up -d
 # Error: port already in use
 ```
 
 **Solution:**
+
 ```bash
 # Check what's using the ports
 lsof -i :5438  # PostgreSQL
@@ -381,12 +407,14 @@ lsof -i :6379  # Redis
 ### Issue 2: Kubernetes pods stuck in "Pending"
 
 **Symptom:**
+
 ```bash
 kubectl get pods
 # Shows: STATUS = Pending
 ```
 
 **Solution:**
+
 ```bash
 # Check pod details
 kubectl describe pod <pod-name>
@@ -401,12 +429,14 @@ kubectl describe pod <pod-name>
 ### Issue 3: Pods in "CrashLoopBackOff"
 
 **Symptom:**
+
 ```bash
 kubectl get pods
 # Shows: STATUS = CrashLoopBackOff
 ```
 
 **Solution:**
+
 ```bash
 # Check pod logs
 kubectl logs <pod-name>
@@ -417,6 +447,7 @@ kubectl logs <pod-name>
 ```
 
 **Fix database connection:**
+
 ```bash
 # Verify PostgreSQL is accessible
 docker ps | grep postgres
@@ -430,12 +461,14 @@ psql postgresql://postgres:postgres@localhost:5438/apollo_db
 ### Issue 4: "Cannot connect to localhost:30080"
 
 **Symptom:**
+
 ```bash
 curl http://localhost:30080/health
 # curl: (7) Failed to connect to localhost port 30080
 ```
 
 **Solution:**
+
 ```bash
 # Check nginx service
 kubectl get svc nginx-service
@@ -455,12 +488,14 @@ kubectl logs -l app=nginx-lb
 ### Issue 5: HPA not scaling
 
 **Symptom:**
+
 ```bash
 kubectl get hpa
 # Shows: <unknown> for TARGETS
 ```
 
 **Solution:**
+
 ```bash
 # Install metrics-server
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -484,12 +519,14 @@ kubectl top pods
 ### Issue 6: "npm run db:push" fails
 
 **Symptom:**
+
 ```bash
 npm run db:push
 # Error: Connection refused
 ```
 
 **Solution:**
+
 ```bash
 # Verify PostgreSQL is running
 docker ps | grep postgres
@@ -518,11 +555,13 @@ chmod +x k8s-load-test-1m.sh
 ```
 
 **In a separate terminal, watch scaling:**
+
 ```bash
 watch -n 2 'kubectl get hpa && echo && kubectl get pods -l app=apollo'
 ```
 
 **What you'll see:**
+
 1. Initial: 2-3 pods running
 2. During load: Pods scale up (can reach 10-50 depending on query complexity)
 3. After load: Pods scale down after ~5 minutes
@@ -533,16 +572,19 @@ watch -n 2 'kubectl get hpa && echo && kubectl get pods -l app=apollo'
 ## 📊 Monitoring Commands
 
 ### View All Resources
+
 ```bash
 kubectl get all
 ```
 
 ### Watch Pods in Real-Time
+
 ```bash
 kubectl get pods --watch
 ```
 
 ### View Pod Logs
+
 ```bash
 # All apollo pods
 kubectl logs -l app=apollo --tail=50 -f
@@ -555,17 +597,20 @@ kubectl logs -l app=nginx-lb -f
 ```
 
 ### View Resource Usage
+
 ```bash
 kubectl top pods
 kubectl top nodes
 ```
 
 ### View HPA Status
+
 ```bash
 kubectl get hpa --watch
 ```
 
 ### View Scaling Events
+
 ```bash
 kubectl describe hpa apollo-hpa
 kubectl get events --sort-by='.lastTimestamp' | grep -i scaled
@@ -576,6 +621,7 @@ kubectl get events --sort-by='.lastTimestamp' | grep -i scaled
 ## 🛑 Stop Everything
 
 ### Stop Kubernetes
+
 ```bash
 # Delete all Kubernetes resources
 kubectl delete -f k8s/
@@ -585,6 +631,7 @@ kubectl get all
 ```
 
 ### Stop Docker Containers
+
 ```bash
 # Stop PostgreSQL and Redis
 docker-compose down
@@ -594,6 +641,7 @@ docker ps
 ```
 
 ### Clean Up (Optional)
+
 ```bash
 # Remove Docker volumes (deletes data)
 docker-compose down -v
@@ -674,6 +722,7 @@ After successful verification:
 ## ❓ Need Help?
 
 **Common commands:**
+
 ```bash
 # Check Kubernetes cluster is running
 kubectl cluster-info
@@ -692,6 +741,7 @@ kubectl get all --all-namespaces
 ```
 
 **Helpful resources:**
+
 - Docker Desktop: https://docs.docker.com/desktop/
 - Kubernetes: https://kubernetes.io/docs/home/
 - kubectl cheatsheet: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
