@@ -64,12 +64,12 @@ This project has been migrated to a **Kubernetes-native setup** with full autosc
 
 ## 📖 New Documentation (Focus on Kubernetes)
 
-| Document                                                 | Purpose                               |
-| -------------------------------------------------------- | ------------------------------------- |
-| [FRESH_INSTALL_GUIDE.md](./FRESH_INSTALL_GUIDE.md)       | **Start here!** Build & Run from scratch |
-| [K8S_LOAD_TEST_GUIDE.md](./K8S_LOAD_TEST_GUIDE.md)       | How to run 1M requests & monitor HPA  |
-| [k8s-load-test-1m.sh](./k8s-load-test-1m.sh)             | Automated script for load testing     |
-| [SETUP-GUIDE.md](./SETUP-GUIDE.md)                       | Deep dive into architecture & K8s files |
+| Document                                           | Purpose                                  |
+| -------------------------------------------------- | ---------------------------------------- |
+| [FRESH_INSTALL_GUIDE.md](./FRESH_INSTALL_GUIDE.md) | **Start here!** Build & Run from scratch |
+| [K8S_LOAD_TEST_GUIDE.md](./K8S_LOAD_TEST_GUIDE.md) | How to run 1M requests & monitor HPA     |
+| [k8s-load-test-1m.sh](./k8s-load-test-1m.sh)       | Automated script for load testing        |
+| [SETUP-GUIDE.md](./SETUP-GUIDE.md)                 | Deep dive into architecture & K8s files  |
 
 ---
 
@@ -83,6 +83,7 @@ The best way to see the power of this setup is to run a massive load test:
 ```
 
 **Monitor in Real-time:**
+
 - Pod Scaling: `kubectl get pods -l app=apollo --watch`
 - Resource Usage: `kubectl top pods`
 - HPA Status: `kubectl get hpa apollo-hpa --watch`
@@ -93,20 +94,20 @@ The best way to see the power of this setup is to run a massive load test:
 
 These files were used for the old Docker Compose manual scaling setup and are no longer needed in the Kubernetes workflow:
 
-| File Name | Reason for Deletion |
-| --------- | ------------------- |
-| `start-load-balanced.sh` | Handled by Kubernetes deployments now. |
-| `test-load-balancer.sh` | Superseded by `k8s-load-test-1m.sh`. |
-| `nginx.conf` (root) | Configuration is now in `k8s/nginx-configmap.yaml`. |
-| `setup.sh` | Old setup logic; use `npm install` and `npm run db:push` instead. |
-| `START_HERE.txt` | Old instructions for Compose setup. |
-| `QUICK_START.md` | Legacy documentation. |
-| `GETTING_STARTED.md` | Legacy index. |
-| `LOAD_BALANCER_SETUP.md` | Legacy technical details. |
-| `VERIFICATION_CHECKLIST.md` | Replaced by `FRESH_INSTALL_GUIDE.md` checklist. |
-| `SETUP_SUMMARY.md` | Legacy summary. |
-| `SETUP_COMPLETE.md` | Legacy completion doc. |
-| `FINAL_SUMMARY.md` | Legacy report. |
+| File Name                   | Reason for Deletion                                               |
+| --------------------------- | ----------------------------------------------------------------- |
+| `start-load-balanced.sh`    | Handled by Kubernetes deployments now.                            |
+| `test-load-balancer.sh`     | Superseded by `k8s-load-test-1m.sh`.                              |
+| `nginx.conf` (root)         | Configuration is now in `k8s/nginx-configmap.yaml`.               |
+| `setup.sh`                  | Old setup logic; use `npm install` and `npm run db:push` instead. |
+| `START_HERE.txt`            | Old instructions for Compose setup.                               |
+| `QUICK_START.md`            | Legacy documentation.                                             |
+| `GETTING_STARTED.md`        | Legacy index.                                                     |
+| `LOAD_BALANCER_SETUP.md`    | Legacy technical details.                                         |
+| `VERIFICATION_CHECKLIST.md` | Replaced by `FRESH_INSTALL_GUIDE.md` checklist.                   |
+| `SETUP_SUMMARY.md`          | Legacy summary.                                                   |
+| `SETUP_COMPLETE.md`         | Legacy completion doc.                                            |
+| `FINAL_SUMMARY.md`          | Legacy report.                                                    |
 
 ---
 
