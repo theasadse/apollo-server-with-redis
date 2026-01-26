@@ -90,27 +90,6 @@ The best way to see the power of this setup is to run a massive load test:
 
 ---
 
-## 🧹 Unused Files (Recommended to Delete)
-
-These files were used for the old Docker Compose manual scaling setup and are no longer needed in the Kubernetes workflow:
-
-| File Name                   | Reason for Deletion                                               |
-| --------------------------- | ----------------------------------------------------------------- |
-| `start-load-balanced.sh`    | Handled by Kubernetes deployments now.                            |
-| `test-load-balancer.sh`     | Superseded by `k8s-load-test-1m.sh`.                              |
-| `nginx.conf` (root)         | Configuration is now in `k8s/nginx-configmap.yaml`.               |
-| `setup.sh`                  | Old setup logic; use `npm install` and `npm run db:push` instead. |
-| `START_HERE.txt`            | Old instructions for Compose setup.                               |
-| `QUICK_START.md`            | Legacy documentation.                                             |
-| `GETTING_STARTED.md`        | Legacy index.                                                     |
-| `LOAD_BALANCER_SETUP.md`    | Legacy technical details.                                         |
-| `VERIFICATION_CHECKLIST.md` | Replaced by `FRESH_INSTALL_GUIDE.md` checklist.                   |
-| `SETUP_SUMMARY.md`          | Legacy summary.                                                   |
-| `SETUP_COMPLETE.md`         | Legacy completion doc.                                            |
-| `FINAL_SUMMARY.md`          | Legacy report.                                                    |
-
----
-
 ## 🛑 Stopping the Project
 
 ```bash
